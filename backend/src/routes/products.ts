@@ -44,6 +44,7 @@ router.post("/amc-plans/subscribe", requireUser as any, async (req: AuthRequest,
     if (!plan) { res.status(404).json({ error: "Plan not found" }); return; }
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + plan.duration);
+    // @ts-ignore drizzle 0.36 insert type
     const [sub] = await db.insert(amcSubscriptionsTable).values({ userId: req.userId!, planId, endDate, status: "active" }).returning();
     res.status(201).json({ ...sub, planName: plan.name });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
