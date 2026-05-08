@@ -14,6 +14,7 @@ export async function indexDocuments(docs: { content: string; title: string; sou
       // Generate embedding via Gemini text-embedding-004
       const embedding = await embedText(doc.content);
 
+      // @ts-ignore drizzle 0.36 insert type
       await db.insert(knowledgeChunksTable).values({
         content: doc.content,
         embedding: JSON.stringify(embedding),
