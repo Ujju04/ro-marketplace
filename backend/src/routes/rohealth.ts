@@ -72,6 +72,7 @@ router.post("/", requireUser as any, async (req: AuthRequest, res) => {
       roAge: parseInt(roAge), lastServiceMonths: parseInt(lastServiceMonths),
       currentTds: parseInt(currentTds), waterTaste, flowSpeed,
     });
+    // @ts-ignore drizzle 0.36 insert type
     const [record] = await db.insert(roHealthTable).values({
       userId: req.userId!, score, status, recommendation,
       roAge: parseInt(roAge), lastServiceMonths: parseInt(lastServiceMonths),
