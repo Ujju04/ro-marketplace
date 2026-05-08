@@ -9,7 +9,7 @@ import Booking from "./pages/Booking";
 import MyBookings from "./pages/MyBookings";
 import { Products, Pricing, AmcPlans } from "./pages/ProductsPricingAmc";
 import TechnicianDashboard from "./pages/technician/Dashboard";
-import RoHealth from "./pages/RoHealth";
+import RoHealth from "./pages/roHealth";
 
 const queryClient = new QueryClient();
 
