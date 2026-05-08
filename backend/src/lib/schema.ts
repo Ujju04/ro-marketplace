@@ -7,8 +7,8 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
   passwordHash: text("password_hash").notNull(),
-  address: text("address"),
-  city: text("city"),
+  address: text("address").default(""),
+  city: text("city").default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -22,9 +22,9 @@ export const techniciansTable = pgTable("technicians", {
   passwordHash: text("password_hash").notNull(),
   experience: integer("experience").default(0),
   city: text("city").notNull(),
-  address: text("address"),
-  lat: numeric("lat", { precision: 10, scale: 7 }),
-  lng: numeric("lng", { precision: 10, scale: 7 }),
+  address: text("address").default(""),
+  lat: numeric("lat", { precision: 10, scale: 7 }).default("0"),
+  lng: numeric("lng", { precision: 10, scale: 7 }).default("0"),
   isAvailable: boolean("is_available").default(false).notNull(),
   rating: numeric("rating", { precision: 3, scale: 2 }).default("4.5"),
   totalJobs: integer("total_jobs").default(0).notNull(),
@@ -36,24 +36,24 @@ export const techniciansTable = pgTable("technicians", {
 // ── Bookings ──────────────────────────────────────────────────────────────────
 export const bookingsTable = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
-  technicianId: integer("technician_id").references(() => techniciansTable.id),
+  userId: integer("user_id").notNull(),
+  technicianId: integer("technician_id").default(0),
   serviceType: text("service_type").notNull(),
   status: text("status").default("pending").notNull(),
   bookingType: text("booking_type").notNull(),
-  scheduledAt: timestamp("scheduled_at"),
+  scheduledAt: timestamp("scheduled_at").default(new Date("1970-01-01")),
   address: text("address").notNull(),
   city: text("city").notNull(),
-  description: text("description"),
-  symptoms: text("symptoms"),
-  lat: numeric("lat", { precision: 10, scale: 7 }),
-  lng: numeric("lng", { precision: 10, scale: 7 }),
-  estimatedCost: text("estimated_cost"),
+  description: text("description").default(""),
+  symptoms: text("symptoms").default(""),
+  lat: numeric("lat", { precision: 10, scale: 7 }).default("0"),
+  lng: numeric("lng", { precision: 10, scale: 7 }).default("0"),
+  estimatedCost: text("estimated_cost").default(""),
   serviceCharge: numeric("service_charge", { precision: 10, scale: 2 }).default("199"),
-  finalAmount: numeric("final_amount", { precision: 10, scale: 2 }),
-  notes: text("notes"),
-  tdsBefore: integer("tds_before"),  // TDS reading before service (by technician)
-  tdsAfter: integer("tds_after"),    // TDS reading after service (by technician)
+  finalAmount: numeric("final_amount", { precision: 10, scale: 2 }).default("0"),
+  notes: text("notes").default(""),
+  tdsBefore: integer("tds_before").default(0),
+  tdsAfter: integer("tds_after").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -61,7 +61,7 @@ export const bookingsTable = pgTable("bookings", {
 // ── Booking Parts (bill line items) ──────────────────────────────────────────
 export const bookingPartsTable = pgTable("booking_parts", {
   id: serial("id").primaryKey(),
-  bookingId: integer("booking_id").notNull().references(() => bookingsTable.id),
+  bookingId: integer("booking_id").notNull(),
   partId: integer("part_id").notNull(),
   partName: text("part_name").notNull(),
   quantity: integer("quantity").default(1).notNull(),
@@ -74,11 +74,11 @@ export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   category: text("category").notNull(),
-  description: text("description"),
+  description: text("description").default(""),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  brand: text("brand"),
+  brand: text("brand").default(""),
   rating: numeric("rating", { precision: 3, scale: 2 }).default("4.0"),
-  imageUrl: text("image_url"),
+  imageUrl: text("image_url").default(""),
   features: json("features").$type<string[]>().default([]),
   inStock: boolean("in_stock").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -91,7 +91,7 @@ export const partsTable = pgTable("parts", {
   category: text("category").notNull(),
   minPrice: numeric("min_price", { precision: 10, scale: 2 }).notNull(),
   maxPrice: numeric("max_price", { precision: 10, scale: 2 }).notNull(),
-  description: text("description"),
+  description: text("description").default(""),
   isActive: boolean("is_active").default(true).notNull(),
 });
 
@@ -99,7 +99,7 @@ export const partsTable = pgTable("parts", {
 export const amcPlansTable = pgTable("amc_plans", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  description: text("description"),
+  description: text("description").default(""),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   duration: integer("duration").notNull(),
   servicesIncluded: integer("services_included").default(2).notNull(),
@@ -110,8 +110,8 @@ export const amcPlansTable = pgTable("amc_plans", {
 // ── AMC Subscriptions ─────────────────────────────────────────────────────────
 export const amcSubscriptionsTable = pgTable("amc_subscriptions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
-  planId: integer("plan_id").notNull().references(() => amcPlansTable.id),
+  userId: integer("user_id").notNull(),
+  planId: integer("plan_id").notNull(),
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date").notNull(),
   status: text("status").default("active").notNull(),
@@ -121,47 +121,46 @@ export const amcSubscriptionsTable = pgTable("amc_subscriptions", {
 // ── Reviews ───────────────────────────────────────────────────────────────────
 export const reviewsTable = pgTable("reviews", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull(),
   technicianId: integer("technician_id").notNull(),
   bookingId: integer("booking_id").notNull(),
   rating: integer("rating").notNull(),
-  comment: text("comment"),
+  comment: text("comment").default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ── TDS Readings ──────────────────────────────────────────────────────────────
 export const tdsReadingsTable = pgTable("tds_readings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull(),
   tdsValue: integer("tds_value").notNull(),
-  city: text("city"),
-  notes: text("notes"),
+  city: text("city").default(""),
+  notes: text("notes").default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ── RO Health Assessments ─────────────────────────────────────────────────────
 export const roHealthTable = pgTable("ro_health", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull(),
   score: integer("score").notNull(),
-  roAge: integer("ro_age_months"),
-  lastServiceMonths: integer("last_service_months"),
-  currentTds: integer("current_tds"),
-  waterTaste: text("water_taste"),
-  flowSpeed: text("flow_speed"),
+  roAge: integer("ro_age_months").default(0),
+  lastServiceMonths: integer("last_service_months").default(0),
+  currentTds: integer("current_tds").default(0),
+  waterTaste: text("water_taste").default(""),
+  flowSpeed: text("flow_speed").default(""),
   recommendation: text("recommendation").notNull(),
   status: text("status").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // ── Knowledge Chunks (RAG vector store) ──────────────────────────────────────
-// Vectors stored as TEXT (JSON array) — we use raw SQL for cosine similarity
 export const knowledgeChunksTable = pgTable("knowledge_chunks", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
-  embedding: text("embedding").notNull(),   // JSON float array from Gemini
-  source: text("source").notNull(),         // "troubleshooting"|"faq"|"parts"|"products"
-  title: text("title"),
+  embedding: text("embedding").notNull(),
+  source: text("source").notNull(),
+  title: text("title").default(""),
   metadata: json("metadata").$type<Record<string, any>>().default({}),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
