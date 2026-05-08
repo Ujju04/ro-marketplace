@@ -26,6 +26,7 @@ router.post("/", requireUser as any, async (req: AuthRequest, res) => {
       .limit(1);
     if (existing.length) { res.status(400).json({ error: "You have already reviewed this booking" }); return; }
 
+    // @ts-ignore drizzle 0.36 insert type
     const [review] = await db.insert(reviewsTable).values({
       userId: req.userId!,
       technicianId: booking.technicianId,
@@ -42,6 +43,7 @@ router.post("/", requireUser as any, async (req: AuthRequest, res) => {
 
     if (stats[0]?.avgRating) {
       await db.update(techniciansTable)
+        // @ts-ignore drizzle 0.36 insert type
         .set({ rating: parseFloat(stats[0].avgRating).toFixed(2) })
         .where(eq(techniciansTable.id, booking.technicianId));
     }
