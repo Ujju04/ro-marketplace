@@ -38,7 +38,8 @@ async function sendOtp(phone: string, otp: string): Promise<void> {
   if (provider === "twilio") {
     // Twilio — global, paid
     // Add to .env: TWILIO_SID, TWILIO_TOKEN, TWILIO_PHONE
-    const { Twilio } = await import("twilio") as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { Twilio } = await (eval('import("twilio")') as Promise<any>);
     const client = new Twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
     await client.messages.create({ body: message, from: process.env.TWILIO_PHONE, to: `+91${phone}` });
     return;
@@ -99,6 +100,7 @@ router.post("/register", async (req, res) => {
     if (!name || !email || !phone || !password) { res.status(400).json({ error: "Missing fields" }); return; }
     const exists = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
     if (exists.length) { res.status(400).json({ error: "Email already registered" }); return; }
+    // @ts-ignore drizzle 0.36 insert type
     const [user] = await db.insert(usersTable).values({
       name, email, phone, passwordHash: hashPassword(password),
       city: city || null,
@@ -125,6 +127,7 @@ router.post("/technician/register", async (req, res) => {
     if (!name || !email || !phone || !password || !city) { res.status(400).json({ error: "Missing fields" }); return; }
     const exists = await db.select().from(techniciansTable).where(eq(techniciansTable.email, email)).limit(1);
     if (exists.length) { res.status(400).json({ error: "Email already registered" }); return; }
+    // @ts-ignore drizzle 0.36 insert type
     const [tech] = await db.insert(techniciansTable).values({
       name, email, phone, passwordHash: hashPassword(password),
       experience: parseInt(experience) || 0,
