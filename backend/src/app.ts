@@ -6,7 +6,7 @@ import productsRouter from "./routes/products.js";
 import techniciansRouter from "./routes/technicians.js";
 import chatRouter from "./routes/chat.js";
 import reviewsRouter from "./routes/reviews.js";
-import roHealthRouter from "./routes/roHealth.js";
+import roHealthRouter from "./routes/rohealth.js";
 
 const app = express();
 
