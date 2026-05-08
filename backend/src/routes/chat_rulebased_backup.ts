@@ -182,6 +182,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
   if (intent === "provide_address") {
     if (lat && lng) {
       if (!userId) { setSession(sid, { step: "idle" }); return { message: "🔐 Please **sign in** to book!", intent, action: "open_auth" }; }
+      // @ts-ignore drizzle 0.36 insert type
       const [b] = await db.insert(bookingsTable).values({ userId, technicianId: null, serviceType: session.suggestedServiceType || "repair", status: "pending", bookingType: "instant", address: addr || `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, city: city || "detected", symptoms: session.diagnosedSymptom || "", serviceCharge: "199", lat: lat.toString(), lng: lng.toString(), estimatedCost: session.estimatedMin ? `${session.estimatedMin}-${session.estimatedMax}` : null }).returning();
       setSession(sid, { step: "idle" });
       const seasonal = getSeasonalAlert();
@@ -191,6 +192,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
     if (!isRealAddress(msg)) return { message: "📍 **Need more detail.**\n\nFormat: **City, Street/Area** (at least 4 words)\n*Example: Delhi, 23 Rohini Sector 7, Near Metro Station*\n\nOr share GPS 👇", intent, action: "request_location", quickReplies: ["📍 Share my GPS location"] };
     if (!userId) { setSession(sid, { step: "idle" }); return { message: "🔐 Please **sign in** to book!", intent, action: "open_auth" }; }
     const bc = msg.split(",")[0].trim().toLowerCase();
+    // @ts-ignore drizzle 0.36 insert type
     const [b] = await db.insert(bookingsTable).values({ userId, technicianId: null, serviceType: session.suggestedServiceType || "repair", status: "pending", bookingType: "instant", address: msg.trim(), city: bc, symptoms: session.diagnosedSymptom || "", serviceCharge: "199", estimatedCost: session.estimatedMin ? `${session.estimatedMin}-${session.estimatedMax}` : null }).returning();
     setSession(sid, { step: "idle" });
     const seasonal = getSeasonalAlert();
@@ -228,6 +230,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
     const result = calcHealth({ roAge: hd.roAge || 12, lastService: hd.lastService || 6, tds: hd.tds || 150, taste: hd.taste || "good", flow, city: session.context?.city || "delhi" });
     setSession(sid, { step: "idle" });
     if (userId) {
+      // @ts-ignore drizzle 0.36 insert type
       await db.insert(roHealthTable).values({ userId, score: result.score, roAge: hd.roAge, lastServiceMonths: hd.lastService, currentTds: hd.tds, waterTaste: hd.taste, flowSpeed: flow, recommendation: result.recommendation, status: result.status }).catch(() => {});
     }
     const bar = "█".repeat(Math.floor(result.score / 10)) + "░".repeat(10 - Math.floor(result.score / 10));
@@ -243,6 +246,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
   if (intent === "tds_direct") {
     if (!userId) return { message: "🔐 Please sign in to log TDS readings.", intent, action: "open_auth" };
     const tds = extractNum(msg)!;
+    // @ts-ignore drizzle 0.36 insert type
     await db.insert(tdsReadingsTable).values({ userId, tdsValue: tds, city: session.context?.city || null }).catch(() => {});
     let status = "🟢 Ideal (50–150 ppm)"; let advice = "Your water is safe to drink.";
     if (tds < 50) { status = "🟡 Too Low"; advice = "May lack essential minerals. Consider mineralizer."; }
@@ -258,6 +262,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
   if (intent === "tds_input") {
     const tds = extractNum(msg);
     if (!tds) return { message: "Please enter a number like *150*", intent };
+    // @ts-ignore drizzle 0.36 insert type
     if (userId) await db.insert(tdsReadingsTable).values({ userId, tdsValue: tds }).catch(() => {});
     setSession(sid, { step: "idle" });
     const status = tds < 50 ? "🟡 Too Low" : tds > 300 ? "🔴 Very High" : tds > 150 ? "🟡 Above Safe Limit" : "🟢 Ideal";
@@ -292,6 +297,7 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
     setSession(sid, { step: "idle" });
     if (userId && bookingId) {
       const [bk] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, bookingId)).limit(1);
+      // @ts-ignore drizzle 0.36 insert type
       if (bk?.technicianId) await db.insert(reviewsTable).values({ userId, technicianId: bk.technicianId, bookingId, rating, comment: msg }).catch(() => {});
     }
     const responses = ["Sorry to hear that! We'll improve. 🙏", "Sorry about the experience. We'll do better!", "Thank you for the feedback!", "Great! Glad you had a good experience! 😊", "Excellent! ⭐⭐⭐⭐⭐ Thank you so much! We'll share this with your technician!"];
@@ -349,7 +355,9 @@ async function respond(msg: string, sid: string, userId?: number, lat?: number, 
   if (intent === "cancel_confirm") {
     const bookingId = session.cancelBookingId;
     if (/yes|confirm|cancel it|haan|ha/i.test(m)) {
-      if (bookingId && userId) await db.update(bookingsTable).set({ status: "cancelled", updatedAt: new Date() }).where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.userId, userId))).catch(() => {});
+      if (bookingId && userId) await db.update(bookingsTable)
+        // @ts-ignore drizzle 0.36 type
+        .set({ status: "cancelled", updatedAt: new Date() }).where(and(eq(bookingsTable.id, bookingId), eq(bookingsTable.userId, userId))).catch(() => {});
       setSession(sid, { step: "idle" });
       return { message: `✅ **Booking #${bookingId} cancelled.**\n\nBook again whenever you need us!`, intent, quickReplies: ["Book a new service"] };
     }
