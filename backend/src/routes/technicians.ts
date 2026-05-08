@@ -27,6 +27,7 @@ router.get("/me", requireTechnician as any, async (req: AuthRequest, res) => {
 router.patch("/me/availability", requireTechnician as any, async (req: AuthRequest, res) => {
   try {
     const { isAvailable } = req.body;
+    // @ts-ignore drizzle 0.36 insert type
     const [tech] = await db.update(techniciansTable).set({ isAvailable, updatedAt: new Date() }).where(eq(techniciansTable.id, req.technicianId!)).returning();
     res.json({ id: tech.id, isAvailable: tech.isAvailable });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
